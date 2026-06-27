@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e3a8a">
+<title>Smart Fix Admin Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#f1f5f9;min-height:100vh}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1e3a8a,#1a56db);padding:24px}
+.login-box{background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{font-size:40px;text-align:center;margin-bottom:8px}
+.login-box h1{font-size:22px;font-weight:700;color:#1e293b;text-align:center;margin-bottom:4px}
+.login-box p{font-size:13px;color:#64748b;text-align:center;margin-bottom:28px}
+.field{margin-bottom:16px}
+.field label{font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;outline:none}
+.field input:focus{border-color:#1a56db}
+.login-btn{width:100%;padding:13px;background:#1a56db;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+.err{color:#be123c;font-size:13px;text-align:center;margin-top:10px;display:none}
+
+/* LAYOUT */
+#dashboard{display:none}
+.sidebar{width:220px;background:#1e293b;min-height:100vh;position:fixed;left:0;top:0;padding:0;z-index:10;transition:transform .3s}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo h2{color:#fff;font-size:16px;font-weight:700}
+.sidebar-logo p{color:rgba(255,255,255,.5);font-size:12px;margin-top:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px 20px;color:rgba(255,255,255,.7);cursor:pointer;font-size:14px;font-weight:500;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:#1a56db;color:#fff}
+.nav-section{padding:16px 20px 6px;font-size:11px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px}
+.main{margin-left:220px;padding:24px}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding:12px}
+  .mob-hdr{display:flex}
+}
+.mob-hdr{display:none;background:#1e293b;padding:14px 16px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:9}
+.mob-hdr h2{color:#fff;font-size:15px;font-weight:700}
+.hamburger{background:none;border:none;color:#fff;font-size:22px;cursor:pointer}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:gap}
+.topbar h1{font-size:22px;font-weight:700;color:#1e293b}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn{padding:9px 16px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#1a56db;color:#fff}
+.btn-secondary{background:#fff;color:#1e293b;border:1.5px solid #e2e8f0}
+.btn-danger{background:#fee2e2;color:#be123c}
+.btn-success{background:#dcfce7;color:#15803d}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:16px;padding:18px 20px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.stat-card .num{font-size:28px;font-weight:700;color:#1e293b;margin-top:4px}
+.stat-card .lbl{font-size:12px;color:#64748b;font-weight:500}
+.stat-card .icon{font-size:22px;margin-bottom:4px}
+
+/* TABLES */
+.card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-hdr{padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-hdr h3{font-size:15px;font-weight:700;color:#1e293b}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 16px;font-size:12px;font-weight:700;color:#64748b;text-align:left;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:12px 16px;font-size:13px;color:#1e293b;border-bottom:1px solid #f8fafc;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+.status-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;display:inline-block}
+.s-pending{background:#dbeafe;color:#1d4ed8}
+.s-delivered{background:#dcfce7;color:#166534}
+.s-return{background:#fee2e2;color:#be123c}
+.s-hold{background:#fef3c7;color:#92400e}
+.pay-cod{background:#fff7ed;color:#c2410c;font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;display:inline-block}
+.pay-online{background:#f0fdf4;color:#15803d;font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;display:inline-block}
+
+/* FILTER ROW */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid #f1f5f9}
+.filter-btn{padding:6px 12px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#64748b}
+.filter-btn.active{border-color:#1a56db;background:#eff6ff;color:#1a56db}
+.search-box{padding:7px 12px;border-radius:10px;border:1.5px solid #e2e8f0;font-size:13px;color:#1e293b;outline:none;flex:1;min-width:160px}
+.search-box:focus{border-color:#1a56db}
+
+/* RIDER CARDS */
+.riders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px}
+.rider-card{background:#f8fafc;border-radius:14px;border:1.5px solid #e2e8f0;padding:16px}
+.rider-avatar{width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px}
+.rider-name{font-size:15px;font-weight:700;color:#1e293b}
+.rider-id{font-size:12px;color:#64748b;margin-top:2px}
+.rider-stats{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.rider-stat{background:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:18px;font-weight:700;color:#1e293b;margin-bottom:20px}
+.form-field{margin-bottom:14px}
+.form-field label{font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:5px}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;outline:none}
+.form-field input:focus,.form-field select:focus{border-color:#1a56db}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+
+/* CHECKBOX */
+.cb-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f8fafc;cursor:pointer}
+.cb-row:hover{background:#f8fafc}
+.cb-row input[type=checkbox]{width:16px;height:16px;cursor:pointer}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;z-index:100;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🛵</div>
+    <h1>Smart Fix Admin</h1>
+    <p>Delivery Management Dashboard</p>
+    <div class="field"><label>Admin ID</label><input type="text" id="a-id" placeholder="admin" value="admin"></div>
+    <div class="field"><label>PIN</label><input type="password" id="a-pin" placeholder="1234"></div>
+    <button class="login-btn" onclick="adminLogin()">Sign In →</button>
+    <div class="err" id="a-err">Invalid credentials</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <!-- Mobile header -->
+  <div class="mob-hdr">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <h2>Smart Fix Admin</h2>
+    <button class="btn btn-sm btn-secondary" onclick="adminLogout()">Logout</button>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h2>🛵 Smart Fix</h2>
+      <p>Admin Dashboard</p>
+    </div>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('overview')">📊 Overview</div>
+    <div class="nav-item" onclick="showPage('shipments')">📦 Shipments</div>
+    <div class="nav-section">Management</div>
+    <div class="nav-item" onclick="showPage('riders')">🚴 Riders</div>
+    <div class="nav-item" onclick="showPage('assign')">🗂️ Assign</div>
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" onclick="showPage('report')">📄 Report</div>
+    <div style="padding:20px;margin-top:auto;position:absolute;bottom:0;width:100%">
+      <button onclick="adminLogout()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none;border-radius:10px;cursor:pointer;font-size:13px">Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- OVERVIEW -->
+    <div id="page-overview">
+      <div class="topbar">
+        <h1>📊 Overview</h1>
+        <div class="topbar-right">
+          <button class="btn btn-secondary" onclick="loadData()">🔄 Refresh</button>
+          <button class="btn btn-primary" onclick="openAddShipment()">+ Add Shipment</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="icon">📦</div><div class="lbl">Total Shipments</div><div class="num" id="ov-total">0</div></div>
+        <div class="stat-card"><div class="icon">⏳</div><div class="lbl">Pending</div><div class="num" id="ov-pending" style="color:#1d4ed8">0</div></div>
+        <div class="stat-card"><div class="icon">✅</div><div class="lbl">Delivered</div><div class="num" id="ov-delivered" style="color:#16a34a">0</div></div>
+        <div class="stat-card"><div class="icon">⏸️</div><div class="lbl">On Hold</div><div class="num" id="ov-hold" style="color:#d97706">0</div></div>
+        <div class="stat-card"><div class="icon">↩️</div><div class="lbl">Returns</div><div class="num" id="ov-returns" style="color:#be123c">0</div></div>
+        <div class="stat-card"><div class="icon">💰</div><div class="lbl">COD to Collect</div><div class="num" id="ov-cod" style="color:#c2410c;font-size:20px">AED 0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h3>Recent Updates</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Con. No</th><th>Customer</th><th>Area</th><th>Rider</th><th>Payment</th><th>Status</th><th>Updated</th></tr></thead>
+            <tbody id="recent-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHIPMENTS -->
+    <div id="page-shipments" style="display:none">
+      <div class="topbar">
+        <h1>📦 All Shipments</h1>
+        <button class="btn btn-primary" onclick="openAddShipment()">+ Add Shipment</button>
+      </div>
+      <div class="card">
+        <div class="filter-row">
+          <input type="text" class="search-box" id="ship-search" placeholder="Search con. no, customer, area..." oninput="filterShipments()">
+          <button class="filter-btn active" onclick="setFilter('all')">All</button>
+          <button class="filter-btn" onclick="setFilter('Pending')">Pending</button>
+          <button class="filter-btn" onclick="setFilter('Delivered')">Delivered</button>
+          <button class="filter-btn" onclick="setFilter('Hold')">Hold</button>
+          <button class="filter-btn" onclick="setFilter('Return')">Return</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Con. No</th><th>Company</th><th>Customer</th><th>Phone</th><th>Area</th><th>Payment</th><th>Balance</th><th>Rider</th><th>Status</th><th>Reason</th></tr></thead>
+            <tbody id="ship-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIDERS -->
+    <div id="page-riders" style="display:none">
+      <div class="topbar">
+        <h1>🚴 Riders</h1>
+        <button class="btn btn-primary" onclick="openAddRider()">+ Add Rider</button>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h3>All Riders</h3></div>
+        <div class="riders-grid" id="riders-grid"></div>
+      </div>
+    </div>
+
+    <!-- ASSIGN -->
+    <div id="page-assign" style="display:none">
+      <div class="topbar"><h1>🗂️ Assign Shipments</h1></div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <h3>Select Rider</h3>
+          <select id="assign-rider" style="padding:8px 12px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;color:#1e293b">
+            <option value="">-- Choose Rider --</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <h3>Unassigned Shipments</h3>
+          <button class="btn btn-primary btn-sm" onclick="doAssign()">Assign Selected →</button>
+        </div>
+        <div id="assign-list"></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="page-report" style="display:none">
+      <div class="topbar"><h1>📄 Report</h1><button class="btn btn-primary" onclick="adminPDF()">⬇️ Download PDF</button></div>
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+        <div class="stat-card"><div class="lbl">Delivered</div><div class="num" id="rp-d" style="color:#16a34a">0</div></div>
+        <div class="stat-card"><div class="lbl">Returns</div><div class="num" id="rp-r" style="color:#be123c">0</div></div>
+        <div class="stat-card"><div class="lbl">On Hold</div><div class="num" id="rp-h" style="color:#d97706">0</div></div>
+        <div class="stat-card"><div class="lbl">COD Collected</div><div class="num" id="rp-cod" style="font-size:18px;color:#c2410c">AED 0</div></div>
+        <div class="stat-card"><div class="lbl">Total Courier</div><div class="num" id="rp-fee" style="font-size:18px">AED 0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h3>All Shipments</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Con. No</th><th>Company</th><th>Customer</th><th>Area</th><th>Rider</th><th>Payment</th><th>Status</th><th>Reason</th></tr></thead>
+            <tbody id="rp-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SHIPMENT MODAL -->
+<div class="overlay" id="add-ship-overlay" onclick="if(event.target===this)closeOverlay('add-ship-overlay')">
+  <div class="modal">
+    <h2>+ Add Shipment</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-field"><label>Con. No *</label><input type="text" id="f-con" placeholder="e.g. DC06-200"></div>
+      <div class="form-field"><label>Company *</label><input type="text" id="f-company" placeholder="OSBUY / Perfume / RW"></div>
+      <div class="form-field"><label>Customer Name *</label><input type="text" id="f-customer" placeholder="Full name"></div>
+      <div class="form-field"><label>Phone *</label><input type="text" id="f-phone" placeholder="05xxxxxxxx"></div>
+      <div class="form-field" style="grid-column:1/-1"><label>Address *</label><input type="text" id="f-address" placeholder="Full delivery address"></div>
+      <div class="form-field"><label>Location / Area *</label><input type="text" id="f-location" placeholder="DXB-BARSHA"></div>
+      <div class="form-field"><label>Payment Type</label>
+        <select id="f-payment"><option value="COD">COD (Cash)</option><option value="Online">Online Paid</option></select>
+      </div>
+      <div class="form-field"><label>Product Amount (AED)</label><input type="number" id="f-amount" placeholder="0"></div>
+      <div class="form-field"><label>Courier Fee (AED)</label><input type="number" id="f-courier" placeholder="0"></div>
+      <div class="form-field"><label>Balance / COD (AED)</label><input type="number" id="f-balance" placeholder="0"></div>
+      <div class="form-field"><label>Assign Rider</label>
+        <select id="f-rider"><option value="">Unassigned</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeOverlay('add-ship-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShipment()">Save Shipment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD RIDER MODAL -->
+<div class="overlay" id="add-rider-overlay" onclick="if(event.target===this)closeOverlay('add-rider-overlay')">
+  <div class="modal">
+    <h2 id="rider-modal-title">+ Add Rider</h2>
+    <div class="form-field"><label>Full Name *</label><input type="text" id="r-name" placeholder="Rider's full name"></div>
+    <div class="form-field"><label>Phone</label><input type="text" id="r-phone" placeholder="05xxxxxxxx"></div>
+    <div class="form-field"><label>PIN (4 digits) *</label><input type="text" id="r-pin" placeholder="e.g. 1234" maxlength="6" inputmode="numeric"></div>
+    <div style="background:#f8fafc;border-radius:10px;padding:12px;font-size:12px;color:#64748b;margin-top:4px">
+      The rider will use their <strong>Rider ID</strong> (shown after saving) + this <strong>PIN</strong> to log in to the rider app.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeOverlay('add-rider-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRider()">Save Rider</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+const API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+let allShipments = [], allRiders = [], shipFilter = 'all', currentAdmin = null;
+
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+async function api(action, data={}) {
+  if (API_URL === 'https://script.google.com/macros/s/AKfycbylAcQ9cvTUEHtFf6S2HMxbzs6FZBeIVwddEzqezFmhnwg7tUDOVRq5cOgzZQmXuhOQZg/exec') return null;
+  try {
+    const res = await fetch(API_URL + '?action=' + action, {
+      method:'POST', body:JSON.stringify({action,...data}),
+      headers:{'Content-Type':'application/json'}
+    });
+    return await res.json();
+  } catch(e) { return null; }
+}
+
+// ── AUTH ──
+async function adminLogin() {
+  const id = document.getElementById('a-id').value.trim();
+  const pin = document.getElementById('a-pin').value.trim();
+  if (!id || !pin) { showAErr('Fill in all fields'); return; }
+
+  // Try real API if URL is configured
+  if (API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    const res = await api('login', {riderId:id, pin});
+    if (res && res.success && res.rider && res.rider.role === 'admin') {
+      currentAdmin = res.rider;
+      startDashboard();
+      return;
+    } else if (res && res.success === false) {
+      showAErr('Invalid admin credentials');
+      return;
+    }
+    // If API failed (network/CORS error), fall through to demo login
+  }
+
+  // Demo mode - always works with admin / 1234
+  if (id === 'admin' && pin === '1234') {
+    currentAdmin = {id:'admin', name:'Admin', role:'admin'};
+    startDashboard();
+  } else {
+    showAErr('Invalid credentials. Enter: admin / 1234');
+  }
+}
+
+function showAErr(msg) { const e=document.getElementById('a-err'); e.textContent=msg; e.style.display='block'; }
+
+function adminLogout() {
+  currentAdmin=null;
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function startDashboard() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  // Make sure overview is visible first
+  ['overview','shipments','riders','assign','report'].forEach(function(p){
+    var el = document.getElementById('page-'+p);
+    if(el) el.style.display = p==='overview' ? 'block' : 'none';
+  });
+  loadData();
+}
+
+// ── DATA ──
+async function loadData() {
+  // Load riders
+  const rRes = await api('getRiders');
+  if (rRes && rRes.riders) allRiders = rRes.riders;
+  else loadDemoRiders();
+
+  // Load shipments
+  const sRes = await api('getAllShipments');
+  if (sRes && sRes.shipments) allShipments = sRes.shipments.map(mapRow);
+  else loadDemoShipments();
+
+  renderAll();
+}
+
+function mapRow(s) {
+  return {
+    con: s['Con.No'] || s.con,
+    company: s['Company'] || s.company,
+    customer: s['Customer Name'] || s.customer,
+    phone: s['Phone'] || s.phone,
+    address: s['Address'] || s.address,
+    area: s['Location'] || s.area,
+    amount: Number(s['Prod.Amount']||s.amount)||0,
+    courier: Number(s['Courier']||s.courier)||0,
+    balance: Number(s['Balance']||s.balance)||0,
+    payment: s['Payment Type']||s.payment||'COD',
+    status: s['Status']||s.status||'Pending',
+    riderId: s['Rider ID']||s.riderId||'',
+    returnReason: s['Return Reason']||s.returnReason||'',
+    holdReason: s['Hold Reason']||s.holdReason||'',
+    updatedAt: s['Updated At']||s.updatedAt||''
+  };
+}
+
+function loadDemoRiders() {
+  allRiders = [
+    {id:'R001', name:'Rider Ahmed', phone:'0501111111', role:'rider'},
+    {id:'R002', name:'Rider Sara', phone:'0502222222', role:'rider'},
+  ];
+}
+
+function loadDemoShipments() {
+  allShipments = [
+    {con:'DC06-130',company:'OSBUY',customer:'Ahmed Al Rashid',phone:'0501234567',address:'DXB-BARSHA, Villa 12',area:'DXB-BARSHA',amount:69,courier:11,balance:58,payment:'COD',status:'Pending',riderId:'R001',returnReason:'',holdReason:'',updatedAt:''},
+    {con:'WD06-198',company:'OSBUY',customer:'Sara Mohammed',phone:'0559876543',address:'DXB-AL QUOZ, Shop 4',area:'DXB-AL QUOZ',amount:49,courier:11,balance:38,payment:'Online',status:'Delivered',riderId:'R001',returnReason:'',holdReason:'',updatedAt:'2025-06-12T10:30:00Z'},
+    {con:'BM06-259',company:'OSBUY',customer:'Khalid Ibrahim',phone:'0521122334',address:'DXB-BARSHA, Apt 301',area:'DXB-BARSHA',amount:49,courier:11,balance:38,payment:'COD',status:'Hold',riderId:'R001',returnReason:'',holdReason:'Customer not home',updatedAt:'2025-06-12T09:00:00Z'},
+    {con:'TL06-47',company:'OSBUY',customer:'Fatima Noor',phone:'0556677889',address:'DXB-WARQA, House 7',area:'DXB-WARQA',amount:49,courier:11,balance:38,payment:'Online',status:'Return',riderId:'R002',returnReason:'Wrong address',holdReason:'',updatedAt:'2025-06-12T11:00:00Z'},
+    {con:'PR-0028',company:'Perfume',customer:'James Wilson',phone:'0504455667',address:'DXB, Downtown',area:'DXB',amount:100,courier:20,balance:80,payment:'COD',status:'Pending',riderId:'R002',returnReason:'',holdReason:'',updatedAt:''},
+    {con:'PR-0029',company:'Perfume',customer:'Layla Hassan',phone:'0503344556',address:'DXB, Business Bay',area:'DXB',amount:100,courier:20,balance:80,payment:'COD',status:'Delivered',riderId:'R002',returnReason:'',holdReason:'',updatedAt:'2025-06-12T13:00:00Z'},
+    {con:'RW-5472',company:'RW',customer:'Omar Farooq',phone:'0527788990',address:'SHJ, Al Nahda',area:'SHJ',amount:120,courier:20,balance:100,payment:'Online',status:'Pending',riderId:'',returnReason:'',holdReason:'',updatedAt:''},
+    {con:'SP06-131',company:'OSBUY',customer:'Mei Chen',phone:'0558899001',address:'DXB-AL QUOZ, WH 9',area:'DXB-AL QUOZ',amount:49,courier:11,balance:38,payment:'COD',status:'Pending',riderId:'',returnReason:'',holdReason:'',updatedAt:''},
+  ];
+}
+
+function riderName(id) {
+  const r = allRiders.find(r=>r.id===id);
+  return r ? r.name : (id ? id : '—');
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  try { renderOverview(); } catch(e){ console.error('renderOverview error:', e); }
+  try { renderShipments(); } catch(e){ console.error('renderShipments error:', e); }
+  try { renderRiders(); } catch(e){ console.error('renderRiders error:', e); }
+  try { renderAssign(); } catch(e){ console.error('renderAssign error:', e); }
+  try { renderReport(); } catch(e){ console.error('renderReport error:', e); }
+}
+
+function statusBadge(s) {
+  const cls = s==='Delivered'?'s-delivered':s==='Return'?'s-return':s==='Hold'?'s-hold':'s-pending';
+  return `<span class="status-badge ${cls}">${s}</span>`;
+}
+
+function renderOverview() {
+  const s = allShipments;
+  document.getElementById('ov-total').textContent = s.length;
+  document.getElementById('ov-pending').textContent = s.filter(x=>x.status==='Pending').length;
+  document.getElementById('ov-delivered').textContent = s.filter(x=>x.status==='Delivered').length;
+  document.getElementById('ov-hold').textContent = s.filter(x=>x.status==='Hold').length;
+  document.getElementById('ov-returns').textContent = s.filter(x=>x.status==='Return').length;
+  const cod = s.filter(x=>x.status==='Pending'&&x.payment==='COD').reduce((a,x)=>a+x.balance,0);
+  document.getElementById('ov-cod').textContent = 'AED '+cod;
+  const recent = [...s].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).slice(0,10);
+  document.getElementById('recent-table').innerHTML = recent.map(x=>`<tr>
+    <td><strong>${x.con}</strong></td><td>${x.customer}</td><td>${x.area}</td>
+    <td>${riderName(x.riderId)}</td>
+    <td><span class="${x.payment==='COD'?'pay-cod':'pay-online'}">${x.payment==='COD'?'COD AED '+x.balance:'Online'}</span></td>
+    <td>${statusBadge(x.status)}</td>
+    <td style="font-size:11px;color:#94a3b8">${x.updatedAt?new Date(x.updatedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'—'}</td>
+  </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No shipments yet</td></tr>';
+}
+
+function renderShipments() {
+  const q = (document.getElementById('ship-search')||{}).value||'';
+  const filtered = allShipments.filter(x=>{
+    const matchStatus = shipFilter==='all' || x.status===shipFilter;
+    const matchQ = !q || [x.con,x.customer,x.area,x.company].some(v=>(v||'').toLowerCase().includes(q.toLowerCase()));
+    return matchStatus && matchQ;
+  });
+  document.getElementById('ship-table').innerHTML = filtered.map(x=>`<tr>
+    <td><strong>${x.con}</strong></td><td>${x.company}</td><td>${x.customer}</td>
+    <td><a href="tel:${x.phone}" style="color:#1a56db">${x.phone}</a></td>
+    <td>${x.area}</td>
+    <td><span class="${x.payment==='COD'?'pay-cod':'pay-online'}">${x.payment}</span></td>
+    <td style="font-weight:600">${x.payment==='COD'?'AED '+x.balance:'—'}</td>
+    <td>${riderName(x.riderId)}</td>
+    <td>${statusBadge(x.status)}</td>
+    <td style="font-size:12px;color:#64748b">${x.returnReason||x.holdReason||'—'}</td>
+  </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:#94a3b8;padding:24px">No shipments found</td></tr>';
+}
+
+function setFilter(f) {
+  shipFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim()===f||(f==='all'&&b.textContent.trim()==='All')));
+  renderShipments();
+}
+
+function filterShipments() { renderShipments(); }
+
+function renderRiders() {
+  const riderShipments = id => allShipments.filter(s=>s.riderId===id);
+  document.getElementById('riders-grid').innerHTML = allRiders.filter(r=>r.role!=='admin').map(r=>{
+    const rs = riderShipments(r.id);
+    const del = rs.filter(s=>s.status==='Delivered').length;
+    const pen = rs.filter(s=>s.status==='Pending').length;
+    return `<div class="rider-card">
+      <div class="rider-avatar">🚴</div>
+      <div class="rider-name">${r.name}</div>
+      <div class="rider-id">ID: <strong>${r.id}</strong> · PIN needed to login</div>
+      <div style="font-size:12px;color:#64748b;margin-top:3px">📞 ${r.phone||'—'}</div>
+      <div class="rider-stats">
+        <span class="rider-stat" style="color:#16a34a">✅ ${del} done</span>
+        <span class="rider-stat" style="color:#1d4ed8">⏳ ${pen} pending</span>
+        <span class="rider-stat" style="color:#be123c">↩️ ${rs.filter(s=>s.status==='Return').length}</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn btn-danger btn-sm" onclick="deleteRider('${r.id}')">🗑️ Remove</button>
+        <button class="btn btn-secondary btn-sm" onclick="viewRiderShipments('${r.id}')">📦 Shipments</button>
+      </div>
+    </div>`;
+  }).join('') || '<div style="padding:24px;color:#94a3b8;text-align:center">No riders yet. Add one →</div>';
+}
+
+function renderAssign() {
+  const ridSel = document.getElementById('assign-rider');
+  if (!ridSel) return;
+  const cur = ridSel.value;
+  ridSel.innerHTML = '<option value="">-- Choose Rider --</option>' + allRiders.filter(r=>r.role!=='admin').map(r=>`<option value="${r.id}" ${r.id===cur?'selected':''}>${r.name}</option>`).join('');
+  const fRiderSel = document.getElementById('f-rider');
+  if (fRiderSel) fRiderSel.innerHTML = '<option value="">Unassigned</option>' + allRiders.filter(r=>r.role!=='admin').map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+
+  const unassigned = allShipments.filter(s=>(!s.riderId||s.riderId==='')&&s.status==='Pending');
+  document.getElementById('assign-list').innerHTML = unassigned.length ? unassigned.map(s=>`
+    <div class="cb-row">
+      <input type="checkbox" id="cb-${s.con}" value="${s.con}">
+      <label for="cb-${s.con}" style="flex:1;cursor:pointer">
+        <strong>${s.con}</strong> · ${s.customer} · <span style="color:#64748b">${s.area}</span>
+        <span class="${s.payment==='COD'?'pay-cod':'pay-online'}" style="margin-left:6px">${s.payment==='COD'?'COD AED '+s.balance:'Online'}</span>
+      </label>
+    </div>`).join('') : '<div style="padding:24px;text-align:center;color:#94a3b8">All shipments are assigned ✅</div>';
+}
+
+async function doAssign() {
+  const riderId = document.getElementById('assign-rider').value;
+  if (!riderId) { toast('Select a rider first'); return; }
+  const checked = [...document.querySelectorAll('#assign-list input:checked')].map(cb=>cb.value);
+  if (!checked.length) { toast('Select at least one shipment'); return; }
+  checked.forEach(con => {
+    const s = allShipments.find(x=>x.con===con);
+    if (s) s.riderId = riderId;
+  });
+  if (API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') await api('assignRider',{conNos:checked, riderId});
+  toast(`✅ Assigned ${checked.length} shipment(s) to ${riderName(riderId)}`);
+  renderAll();
+}
+
+function renderReport() {
+  const s = allShipments;
+  document.getElementById('rp-d').textContent = s.filter(x=>x.status==='Delivered').length;
+  document.getElementById('rp-r').textContent = s.filter(x=>x.status==='Return').length;
+  document.getElementById('rp-h').textContent = s.filter(x=>x.status==='Hold').length;
+  document.getElementById('rp-cod').textContent = 'AED '+s.filter(x=>x.status==='Delivered'&&x.payment==='COD').reduce((a,x)=>a+x.balance,0);
+  document.getElementById('rp-fee').textContent = 'AED '+s.reduce((a,x)=>a+x.courier,0);
+  document.getElementById('rp-table').innerHTML = s.map(x=>`<tr>
+    <td><strong>${x.con}</strong></td><td>${x.company}</td><td>${x.customer}</td><td>${x.area}</td>
+    <td>${riderName(x.riderId)}</td>
+    <td><span class="${x.payment==='COD'?'pay-cod':'pay-online'}">${x.payment==='COD'?'COD AED '+x.balance:'Online'}</span></td>
+    <td>${statusBadge(x.status)}</td>
+    <td style="font-size:12px;color:#64748b">${x.returnReason||x.holdReason||'—'}</td>
+  </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:24px">No data</td></tr>';
+}
+
+// ── RIDER CRUD ──
+function openAddRider() { document.getElementById('r-name').value='';document.getElementById('r-phone').value='';document.getElementById('r-pin').value=''; document.getElementById('add-rider-overlay').style.display='flex'; }
+async function saveRider() {
+  const name=document.getElementById('r-name').value.trim();
+  const phone=document.getElementById('r-phone').value.trim();
+  const pin=document.getElementById('r-pin').value.trim();
+  if(!name||!pin){toast('Name and PIN required');return;}
+  if(API_URL!=='YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'){
+    const res=await api('addRider',{name,phone,pin});
+    if(res&&res.success){allRiders.push({id:res.riderId,name,phone,role:'rider'});toast('✅ Rider added! ID: '+res.riderId);}
+  } else {
+    const id='R'+Date.now().toString().slice(-6);
+    allRiders.push({id,name,phone,role:'rider'});
+    toast('✅ Rider added! ID: '+id+' (Demo mode)');
+  }
+  closeOverlay('add-rider-overlay');renderAll();
+}
+
+async function deleteRider(riderId) {
+  if(!confirm('Remove this rider? Their shipments will become unassigned.'))return;
+  allRiders=allRiders.filter(r=>r.id!==riderId);
+  allShipments.forEach(s=>{if(s.riderId===riderId)s.riderId='';});
+  if(API_URL!=='YOUR_GOOGLE_APPS_SCRIPT_URL_HERE')await api('deleteRider',{riderId});
+  toast('Rider removed');renderAll();
+}
+
+function viewRiderShipments(riderId) {
+  shipFilter='all';
+  document.getElementById('ship-search').value=riderName(riderId);
+  showPage('shipments');
+  filterShipments();
+}
+
+// ── SHIPMENT ADD ──
+function openAddShipment() { document.getElementById('add-ship-overlay').style.display='flex'; renderAssign(); }
+async function saveShipment() {
+  const body={
+    conNo:document.getElementById('f-con').value.trim(),
+    company:document.getElementById('f-company').value.trim(),
+    customer:document.getElementById('f-customer').value.trim(),
+    phone:document.getElementById('f-phone').value.trim(),
+    address:document.getElementById('f-address').value.trim(),
+    location:document.getElementById('f-location').value.trim(),
+    payment:document.getElementById('f-payment').value,
+    amount:Number(document.getElementById('f-amount').value)||0,
+    courier:Number(document.getElementById('f-courier').value)||0,
+    balance:Number(document.getElementById('f-balance').value)||0,
+    riderId:document.getElementById('f-rider').value,
+    date:new Date().toLocaleDateString()
+  };
+  if(!body.conNo||!body.customer){toast('Con. No and Customer are required');return;}
+  if(API_URL!=='YOUR_GOOGLE_APPS_SCRIPT_URL_HERE')await api('addShipment',body);
+  allShipments.push({...body,area:body.location,status:'Pending',returnReason:'',holdReason:'',updatedAt:''});
+  closeOverlay('add-ship-overlay');toast('✅ Shipment added');renderAll();
+}
+
+// ── PDF ──
+function adminPDF() {
+  if(typeof window.jspdf==='undefined'){toast('Loading PDF...');return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const pw=doc.internal.pageSize.getWidth();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  doc.setFillColor(26,86,219);doc.rect(0,0,pw,28,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('Smart Fix Delivery — Admin Report',14,13);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text(today,14,21);
+  const s=allShipments;
+  doc.autoTable({startY:34,head:[['Con. No','Company','Customer','Area','Rider','Payment','Balance','Status','Reason']],
+    body:s.map(x=>[x.con,x.company,x.customer,x.area,riderName(x.riderId),x.payment,x.payment==='COD'?'AED '+x.balance:'—',x.status,x.returnReason||x.holdReason||'—']),
+    styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[26,86,219],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[248,250,255]},margin:{left:14}});
+  doc.save('SmartFix_Admin_Report_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('✅ PDF downloaded');
+}
+
+// ── NAV ──
+function showPage(page) {
+  ['overview','shipments','riders','assign','report'].forEach(p=>{
+    var el = document.getElementById('page-'+p);
+    if(el) el.style.display = p===page ? 'block' : 'none';
+  });
+  // Update active nav item based on page name
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    n.classList.remove('active');
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').indexOf("'"+page+"'") !== -1){
+      n.classList.add('active');
+    }
+  });
+  if(window.innerWidth<=768){
+    var sb = document.getElementById('sidebar');
+    if(sb) sb.classList.remove('open');
+  }
+  if(page==='report') renderReport();
+  if(page==='assign') renderAssign();
+  if(page==='riders') renderRiders();
+  if(page==='shipments') renderShipments();
+  if(page==='overview') renderOverview();
+}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
+function closeOverlay(id){document.getElementById(id).style.display='none';}
+
+// Start
+</script>
+</body>
+</html>
