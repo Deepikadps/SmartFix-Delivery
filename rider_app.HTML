@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a56db">
+<title>Smart Fix Rider</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#f1f5f9;min-height:100vh}
+
+/* LOGIN */
+#login-screen{min-height:100vh;background:linear-gradient(135deg,#1e3a8a,#1a56db);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.login-icon{font-size:56px;margin-bottom:12px}
+.login-title{color:#fff;font-size:26px;font-weight:700;margin-bottom:4px}
+.login-sub{color:rgba(255,255,255,0.75);font-size:14px;margin-bottom:32px}
+.login-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:340px}
+.login-card h2{font-size:18px;font-weight:700;color:#1e293b;margin-bottom:20px;text-align:center}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px}
+.field input{width:100%;padding:13px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:16px;color:#1e293b;outline:none;background:#fff}
+.field input:focus{border-color:#1a56db}
+.login-btn{width:100%;padding:14px;background:#1a56db;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
+.login-btn:active{background:#1e40af}
+.err-msg{color:#be123c;font-size:13px;text-align:center;margin-top:12px;padding:10px;background:#fff1f2;border-radius:8px;display:none}
+
+/* HEADER */
+#main-app{display:none}
+.hdr{background:#1a56db;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.hdr-left h1{font-size:16px;font-weight:700}
+.hdr-left p{font-size:11px;opacity:0.8;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.count-pill{background:rgba(255,255,255,0.25);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700}
+.logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:60px;padding:11px 4px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;color:#64748b;border-bottom:3px solid transparent;white-space:nowrap}
+.tab.on{color:#1a56db;border-bottom-color:#1a56db;background:#f8fafc}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px}
+.stat{background:#fff;border-radius:10px;padding:8px 4px;text-align:center;border:1px solid #e2e8f0}
+.stat b{display:block;font-size:18px;font-weight:700;color:#1e293b}
+.stat span{font-size:10px;color:#64748b}
+
+/* AREA LABEL */
+.area-lbl{padding:8px 12px 3px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.6px;display:flex;align-items:center;gap:6px}
+.area-pill{background:#dbeafe;color:#1d4ed8;font-size:11px;padding:2px 10px;border-radius:10px;font-weight:700}
+
+/* CARD */
+.card{background:#fff;margin:0 10px 10px;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.07)}
+.card-body{padding:12px 14px 10px;cursor:pointer}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.card-con{font-size:14px;font-weight:700;color:#1e293b}
+.card-name{font-size:13px;color:#475569;margin-top:2px}
+.co-tag{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700;background:#f1f5f9;color:#475569}
+.card-addr{font-size:12px;color:#64748b;margin:5px 0 8px;line-height:1.4}
+.card-foot{display:flex;align-items:center;justify-content:space-between}
+.pay-badge{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px}
+.pay-cod{background:#fff7ed;color:#c2410c}
+.pay-onl{background:#f0fdf4;color:#16a34a}
+.card-btns{display:flex;gap:6px}
+.icon-btn{padding:7px 10px;border-radius:8px;border:none;cursor:pointer;font-size:14px;background:#f1f5f9}
+
+/* ACTION ROW */
+.act-row{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #f1f5f9}
+.act{padding:11px 4px;border:none;cursor:pointer;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.2}
+.act-del{background:#16a34a;color:#fff}
+.act-hld{background:#f59e0b;color:#fff}
+.act-ret{background:#ef4444;color:#fff}
+.act:active{opacity:0.75}
+
+/* DONE/HOLD/RETURN CARDS */
+.done-card{background:#fff;margin:0 10px 8px;border-radius:14px;border:1px solid #e2e8f0;padding:12px 14px}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px}
+.bdg-del{background:#f0fdf4;color:#166534}
+.bdg-hld{background:#fffbeb;color:#92400e}
+.bdg-ret{background:#fff1f2;color:#be123c}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:24px 24px 0 0;padding:20px 16px 36px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto}
+.modal-bar{width:40px;height:4px;background:#cbd5e1;border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.modal-sub{font-size:13px;color:#64748b;margin-bottom:16px}
+.info-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f8fafc;align-items:flex-start}
+.info-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.info-lbl{font-size:11px;color:#64748b}
+.info-val{font-size:14px;font-weight:600;color:#1e293b;margin-top:1px}
+.mbtn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.mbtn{padding:13px;border-radius:12px;border:none;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.mbtn-call{background:#eff6ff;color:#1d4ed8}
+.mbtn-wa{background:#dcfce7;color:#15803d}
+.act3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}
+.act3 button{padding:13px 4px;border:none;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700}
+
+/* REASON LIST */
+.reason-list{margin-top:12px}
+.reason-item{padding:14px 16px;border:2px solid #e2e8f0;border-radius:12px;margin-bottom:8px;cursor:pointer;font-size:14px;color:#1e293b;background:#fff;user-select:none;-webkit-tap-highlight-color:transparent}
+.reason-item.picked{border-color:#1a56db;background:#eff6ff;color:#1d4ed8;font-weight:700}
+.confirm-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;margin-top:10px}
+.cancel-btn{width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;font-size:14px;color:#64748b;background:#fff;margin-top:8px;font-weight:600}
+
+/* ROUTE */
+.route-wrap{padding:12px}
+.route-hdr{background:linear-gradient(135deg,#1e3a8a,#1a56db);color:#fff;border-radius:16px;padding:16px;margin-bottom:14px}
+.route-hdr h2{font-size:15px;font-weight:700;margin-bottom:3px}
+.route-hdr p{font-size:12px;opacity:0.8}
+.stop{display:flex;margin-bottom:0}
+.stop-line{display:flex;flex-direction:column;align-items:center;width:28px;flex-shrink:0}
+.stop-dot{width:14px;height:14px;border-radius:50%;border:3px solid #1a56db;background:#fff;margin-top:16px;flex-shrink:0}
+.stop-dot.first{background:#1a56db}
+.stop-dot.last{background:#16a34a;border-color:#16a34a}
+.stop-line-v{flex:1;width:2px;background:#bfdbfe;min-height:10px}
+.stop-card{flex:1;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:12px 14px;margin:6px 0 6px 8px}
+.stop-area{font-size:14px;font-weight:700;color:#1e293b}
+.stop-count{font-size:12px;color:#64748b;margin-top:1px}
+.stop-items{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.stop-item{font-size:12px;color:#475569;background:#f8fafc;padding:5px 8px;border-radius:8px;display:flex;justify-content:space-between}
+
+/* REPORT */
+.rpt-section{margin:0 10px 12px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden}
+.rpt-hdr{padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px}
+.rpt-row{padding:10px 14px;border-bottom:1px solid #f8fafc;display:flex;justify-content:space-between;align-items:flex-start}
+.pdf-btn{margin:0 10px 20px;padding:14px;background:#1a56db;color:#fff;border:none;border-radius:14px;width:calc(100% - 20px);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+
+.empty{text-align:center;padding:48px 20px;color:#94a3b8;font-size:14px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-icon">🚴</div>
+  <div class="login-title">Smart Fix Delivery</div>
+  <div class="login-sub">Rider App</div>
+  <div class="login-card">
+    <h2>Sign In</h2>
+    <div class="field">
+      <label>Rider ID</label>
+      <input type="text" id="inp-id" placeholder="e.g. R001" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>PIN</label>
+      <input type="password" id="inp-pin" placeholder="Enter PIN" inputmode="numeric">
+    </div>
+    <button class="login-btn" id="login-btn">Sign In →</button>
+    <div class="err-msg" id="err-msg">Invalid ID or PIN. Please try again.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>Smart Fix Delivery</h1>
+      <p id="rider-name">Loading...</p>
+    </div>
+    <div class="hdr-right">
+      <div class="count-pill" id="pending-count">0</div>
+      <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-tab="pending">📦 Pending</div>
+    <div class="tab" data-tab="hold">⏸ Hold</div>
+    <div class="tab" data-tab="route">🗺 Route</div>
+    <div class="tab" data-tab="delivered">✅ Done</div>
+    <div class="tab" data-tab="returns">↩ Return</div>
+    <div class="tab" data-tab="report">📄 Report</div>
+  </div>
+
+  <div id="pg-pending">
+    <div class="stats">
+      <div class="stat"><b id="st-p">0</b><span>Pending</span></div>
+      <div class="stat"><b id="st-h" style="color:#d97706">0</b><span>Hold</span></div>
+      <div class="stat"><b id="st-cod" style="color:#c2410c">0</b><span>COD</span></div>
+      <div class="stat"><b id="st-onl" style="color:#16a34a">0</b><span>Online</span></div>
+    </div>
+    <div id="pending-list"></div>
+  </div>
+
+  <div id="pg-hold" style="display:none">
+    <div style="padding:12px 12px 4px;font-size:13px;color:#64748b" id="hold-lbl">0 on hold</div>
+    <div id="hold-list"></div>
+  </div>
+
+  <div id="pg-route" style="display:none">
+    <div class="route-wrap">
+      <div class="route-hdr">
+        <h2>🗺 Today's Route</h2>
+        <p>Areas in delivery order</p>
+      </div>
+      <div id="route-stops"></div>
+    </div>
+  </div>
+
+  <div id="pg-delivered" style="display:none">
+    <div style="padding:12px 12px 4px;font-size:13px;color:#64748b" id="del-lbl">0 delivered</div>
+    <div id="delivered-list"></div>
+  </div>
+
+  <div id="pg-returns" style="display:none">
+    <div style="padding:12px 12px 4px;font-size:13px;color:#64748b" id="ret-lbl">0 returns</div>
+    <div id="returns-list"></div>
+  </div>
+
+  <div id="pg-report" style="display:none">
+    <div style="padding:16px 12px 8px">
+      <div style="font-size:17px;font-weight:700;color:#1e293b">End of Day Report</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px" id="rpt-date"></div>
+    </div>
+    <div class="stats" style="grid-template-columns:1fr 1fr">
+      <div class="stat"><b id="r-d" style="color:#16a34a">0</b><span>Delivered</span></div>
+      <div class="stat"><b id="r-r" style="color:#be123c">0</b><span>Returns</span></div>
+      <div class="stat"><b id="r-h" style="color:#d97706">0</b><span>Hold</span></div>
+      <div class="stat"><b id="r-c" style="color:#c2410c;font-size:13px">AED 0</b><span>COD</span></div>
+    </div>
+    <div class="rpt-section">
+      <div class="rpt-hdr">All Shipments</div>
+      <div id="rpt-list"></div>
+    </div>
+    <button class="pdf-btn" id="pdf-btn">⬇ Download PDF Report</button>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detail-overlay">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
+<!-- REASON MODAL -->
+<div class="overlay" id="reason-overlay">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div id="reason-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+
+// ══════════════════════════════════
+// CONFIG — paste your Google Apps Script URL here after Step 4
+// ══════════════════════════════════
+var API_URL = 'https://script.google.com/macros/s/AKfycbylAcQ9cvTUEHtFf6S2HMxbzs6FZBeIVwddEzqezFmhnwg7tUDOVRq5cOgzZQmXuhOQZg/exec
+';
+
+var DEMO_RIDERS = {
+  'R001': { id:'R001', name:'Rider Ahmed', pin:'1111', role:'rider' },
+  'R002': { id:'R002', name:'Rider Sara',  pin:'2222', role:'rider' },
+  'admin': { id:'admin', name:'Admin',     pin:'1234', role:'admin' }
+};
+
+var RETURN_REASONS = ['Customer not available','Customer refused delivery','Wrong address','Damaged item','Customer requested return','Other'];
+var HOLD_REASONS   = ['Customer asked for tomorrow','Customer not home – will call back','Address needs confirmation','Payment issue – will resolve','Other'];
+
+var currentRider = null;
+var selShipment  = null;
+var selAction    = null;
+var selReason    = null;
+var dragSrc      = null;
+
+var data = { pending:[], hold:[], delivered:[], returns:[] };
+
+// ── TOAST ──
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+
+// ── HELPERS ──
+function el(id){ return document.getElementById(id); }
+function setEl(id, val){ var e = el(id); if(e) e.textContent = val; }
+
+// ── LOGIN ──
+el('login-btn').addEventListener('click', function() {
+  var id  = el('inp-id').value.trim();
+  var pin = el('inp-pin').value.trim();
+
+  if (!id || !pin) {
+    showError('Please enter your Rider ID and PIN');
+    return;
+  }
+
+  // Try demo login first (works without Google Sheet)
+  if (DEMO_RIDERS[id] && DEMO_RIDERS[id].pin === pin) {
+    currentRider = DEMO_RIDERS[id];
+    startApp();
+    return;
+  }
+
+  // Try API if configured
+  if (API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    fetch(API_URL + '?action=login', {
+      method: 'POST',
+      body: JSON.stringify({ action:'login', riderId: id, pin: pin }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res && res.success) {
+        currentRider = res.rider;
+        startApp();
+      } else {
+        showError('Invalid ID or PIN');
+      }
+    })
+    .catch(function(){
+      showError('Invalid ID or PIN');
+    });
+    return;
+  }
+
+  showError('Invalid ID or PIN. Use R001 / 1111');
+});
+
+// Also allow Enter key on PIN field
+el('inp-pin').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') el('login-btn').click();
+});
+
+function showError(msg) {
+  var e = el('err-msg');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+el('logout-btn').addEventListener('click', function(){
+  currentRider = null;
+  data = { pending:[], hold:[], delivered:[], returns:[] };
+  el('main-app').style.display = 'none';
+  el('login-screen').style.display = 'flex';
+  el('inp-id').value = '';
+  el('inp-pin').value = '';
+  el('err-msg').style.display = 'none';
+});
+
+function startApp() {
+  el('login-screen').style.display = 'none';
+  el('main-app').style.display = 'block';
+  loadShipments();
+}
+
+// ── LOAD DATA ──
+function loadShipments() {
+  el('pending-list').innerHTML = '<div class="empty">Loading...</div>';
+
+  if (API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    fetch(API_URL + '?action=getShipments', {
+      method: 'POST',
+      body: JSON.stringify({ action:'getShipments', riderId: currentRider.id }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res && res.shipments) {
+        processShipments(res.shipments);
+      } else {
+        loadDemo();
+      }
+    })
+    .catch(function(){ loadDemo(); });
+    return;
+  }
+  loadDemo();
+}
+
+function loadDemo() {
+  var base = [
+    {con:'DC06-130',company:'OSBUY',customer:'Ahmed Al Rashid',phone:'0501234567',address:'DXB-BARSHA, Villa 12, Al Barsha 1',area:'DXB-BARSHA',amount:69,courier:11,balance:58,payment:'COD',status:'Pending',returnReason:'',holdReason:''},
+    {con:'WD06-198',company:'OSBUY',customer:'Sara Mohammed',phone:'0559876543',address:'DXB-AL QUOZ, Shop 4',area:'DXB-AL QUOZ',amount:49,courier:11,balance:38,payment:'Online',status:'Pending',returnReason:'',holdReason:''},
+    {con:'BM06-259',company:'OSBUY',customer:'Khalid Ibrahim',phone:'0521122334',address:'DXB-BARSHA, Apt 301, Barsha Heights',area:'DXB-BARSHA',amount:49,courier:11,balance:38,payment:'COD',status:'Pending',returnReason:'',holdReason:''},
+    {con:'PR-0028',company:'Perfume',customer:'James Wilson',phone:'0504455667',address:'DXB, Downtown Dubai',area:'DXB',amount:100,courier:20,balance:80,payment:'COD',status:'Pending',returnReason:'',holdReason:''},
+    {con:'RW-5472',company:'RW',customer:'Omar Farooq',phone:'0527788990',address:'Sharjah, Al Nahda',area:'SHJ',amount:120,courier:20,balance:100,payment:'Online',status:'Pending',returnReason:'',holdReason:''},
+  ];
+  data.pending   = currentRider.id === 'R002' ? base.slice(2) : base.slice(0,3);
+  if (currentRider.role === 'admin') data.pending = base;
+  data.hold      = [];
+  data.delivered = [];
+  data.returns   = [];
+  renderAll();
+}
+
+function processShipments(raw) {
+  data = { pending:[], hold:[], delivered:[], returns:[] };
+  raw.forEach(function(s){
+    var m = {
+      con: s['Con.No'] || '',
+      company: s['Company'] || '',
+      customer: s['Customer Name'] || '',
+      phone: s['Phone'] || '',
+      address: s['Address'] || '',
+      area: s['Location'] || '',
+      amount: Number(s['Prod.Amount']) || 0,
+      courier: Number(s['Courier']) || 0,
+      balance: Number(s['Balance']) || 0,
+      payment: s['Payment Type'] || 'COD',
+      status: s['Status'] || 'Pending',
+      returnReason: s['Return Reason'] || '',
+      holdReason: s['Hold Reason'] || ''
+    };
+    var st = m.status.toLowerCase();
+    if      (st === 'delivered') data.delivered.push(m);
+    else if (st === 'return')    data.returns.push(m);
+    else if (st === 'hold')      data.hold.push(m);
+    else                         data.pending.push(m);
+  });
+  renderAll();
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  updateCounts();
+  renderPending();
+  renderHold();
+  renderDelivered();
+  renderReturns();
+  renderRoute();
+  renderReport();
+}
+
+function updateCounts() {
+  setEl('rider-name', 'Hi, ' + (currentRider ? currentRider.name : ''));
+  setEl('pending-count', data.pending.length);
+  setEl('st-p',   data.pending.length);
+  setEl('st-h',   data.hold.length);
+  setEl('st-cod', data.pending.filter(function(s){ return s.payment === 'COD'; }).length);
+  setEl('st-onl', data.pending.filter(function(s){ return s.payment === 'Online'; }).length);
+  setEl('hold-lbl', data.hold.length + ' on hold');
+  setEl('del-lbl',  data.delivered.length + ' delivered');
+  setEl('ret-lbl',  data.returns.length + ' returns');
+}
+
+function groupByArea(list) {
+  var g = {};
+  list.forEach(function(s){
+    if (!g[s.area]) g[s.area] = [];
+    g[s.area].push(s);
+  });
+  return g;
+}
+
+function coTag(company) {
+  var c = (company || '').toLowerCase();
+  if (c.includes('osbuy'))   return 'background:#e0f2fe;color:#0369a1';
+  if (c.includes('perfume')) return 'background:#fdf4ff;color:#7e22ce';
+  if (c.includes('rw'))      return 'background:#f0fdf4;color:#166534';
+  return 'background:#f1f5f9;color:#475569';
+}
+
+function renderPending() {
+  var g = groupByArea(data.pending);
+  var keys = Object.keys(g);
+  if (!keys.length) {
+    el('pending-list').innerHTML = '<div class="empty">🎉 All deliveries done!</div>';
+    return;
+  }
+  var html = '';
+  keys.forEach(function(area){
+    var items = g[area];
+    html += '<div class="area-lbl"><span class="area-pill">📍 ' + area + '</span> <span>' + items.length + ' stop' + (items.length > 1 ? 's' : '') + '</span></div>';
+    items.forEach(function(s){
+      html += '<div class="card" data-con="' + s.con + '">' +
+        '<div class="card-body tap-detail">' +
+          '<div class="card-top">' +
+            '<div><div class="card-con">📦 ' + s.con + '</div><div class="card-name">' + s.customer + '</div></div>' +
+            '<span class="co-tag" style="' + coTag(s.company) + '">' + s.company + '</span>' +
+          '</div>' +
+          '<div class="card-addr">📍 ' + s.address + '</div>' +
+          '<div class="card-foot">' +
+            '<span class="pay-badge ' + (s.payment === 'COD' ? 'pay-cod' : 'pay-onl') + '">' + (s.payment === 'COD' ? '💰 COD: AED ' + s.balance : '✅ Online Paid') + '</span>' +
+            '<div class="card-btns">' +
+              '<button class="icon-btn tap-call" data-phone="' + s.phone + '" style="background:#eff6ff">📞</button>' +
+              '<button class="icon-btn tap-wa" data-phone="' + s.phone + '" data-con="' + s.con + '" data-name="' + s.customer + '" style="background:#dcfce7">💬</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="act-row">' +
+          '<button class="act act-del tap-deliver" data-con="' + s.con + '"><span style="font-size:15px">✅</span>Delivered</button>' +
+          '<button class="act act-hld tap-hold" data-con="' + s.con + '"><span style="font-size:15px">⏸</span>Hold</button>' +
+          '<button class="act act-ret tap-return" data-con="' + s.con + '"><span style="font-size:15px">↩</span>Return</button>' +
+        '</div>' +
+      '</div>';
+    });
+  });
+  el('pending-list').innerHTML = html;
+  attachCardListeners();
+}
+
+function attachCardListeners() {
+  // Detail open
+  document.querySelectorAll('.tap-detail').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var con = this.closest('.card').getAttribute('data-con');
+      openDetail(con);
+    });
+  });
+  // Call
+  document.querySelectorAll('.tap-call').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      window.location.href = 'tel:' + this.getAttribute('data-phone');
+    });
+  });
+  // WhatsApp
+  document.querySelectorAll('.tap-wa').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var phone = this.getAttribute('data-phone');
+      var con   = this.getAttribute('data-con');
+      var name  = this.getAttribute('data-name');
+      var num   = phone.startsWith('0') ? '+971' + phone.slice(1) : phone;
+      window.open('https://wa.me/' + num + '?text=Hi%20' + encodeURIComponent(name) + '%2C%20delivery%20for%20' + con, '_blank');
+    });
+  });
+  // Deliver
+  document.querySelectorAll('.tap-deliver').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      doAction(this.getAttribute('data-con'), 'delivered');
+    });
+  });
+  // Hold
+  document.querySelectorAll('.tap-hold').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openReason(this.getAttribute('data-con'), 'hold');
+    });
+  });
+  // Return
+  document.querySelectorAll('.tap-return').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openReason(this.getAttribute('data-con'), 'return');
+    });
+  });
+}
+
+function renderHold() {
+  var list = el('hold-list');
+  if (!data.hold.length) { list.innerHTML = '<div class="empty">⏸ No items on hold</div>'; return; }
+  list.innerHTML = data.hold.map(function(s){
+    return '<div class="done-card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+        '<span style="font-size:14px;font-weight:700;color:#1e293b">' + s.con + '</span>' +
+        '<span class="badge bdg-hld">⏸ Hold</span>' +
+      '</div>' +
+      '<div style="font-size:13px;color:#475569">' + s.customer + ' · ' + s.area + '</div>' +
+      '<div style="font-size:12px;color:#92400e;margin-top:3px">' + s.holdReason + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+        '<button onclick="doActionFromHold(\'' + s.con + '\',\'delivered\')" style="flex:1;padding:9px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">✅ Deliver Now</button>' +
+        '<button onclick="openReason(\'' + s.con + '\',\'return\',true)" style="flex:1;padding:9px;background:#fee2e2;color:#be123c;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">↩ Return</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderDelivered() {
+  var list = el('delivered-list');
+  if (!data.delivered.length) { list.innerHTML = '<div class="empty">✅ No deliveries yet</div>'; return; }
+  list.innerHTML = data.delivered.map(function(s){
+    return '<div class="done-card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+        '<span style="font-size:14px;font-weight:700;color:#1e293b">' + s.con + '</span>' +
+        '<span class="badge bdg-del">✅ Delivered</span>' +
+      '</div>' +
+      '<div style="font-size:13px;color:#475569">' + s.customer + '</div>' +
+      '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + s.area + ' · ' + (s.payment === 'COD' ? 'COD AED ' + s.balance : 'Online Paid') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderReturns() {
+  var list = el('returns-list');
+  if (!data.returns.length) { list.innerHTML = '<div class="empty">↩ No returns yet</div>'; return; }
+  list.innerHTML = data.returns.map(function(s){
+    return '<div class="done-card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+        '<span style="font-size:14px;font-weight:700;color:#1e293b">' + s.con + '</span>' +
+        '<span class="badge bdg-ret">↩ Return</span>' +
+      '</div>' +
+      '<div style="font-size:13px;color:#475569">' + s.customer + '</div>' +
+      '<div style="font-size:12px;color:#be123c;margin-top:3px">' + s.returnReason + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderRoute() {
+  var g = groupByArea(data.pending);
+  var areas = Object.keys(g);
+  if (!areas.length) { el('route-stops').innerHTML = '<div class="empty">No pending stops</div>'; return; }
+  var html = '';
+  areas.forEach(function(area, i){
+    var items = g[area];
+    var isFirst = i === 0, isLast = i === areas.length - 1;
+    html += '<div class="stop">' +
+      '<div class="stop-line">' +
+        (i > 0 ? '<div class="stop-line-v"></div>' : '<div style="height:16px"></div>') +
+        '<div class="stop-dot' + (isFirst ? ' first' : isLast ? ' last' : '') + '"></div>' +
+        (!isLast ? '<div class="stop-line-v" style="flex:1;min-height:40px"></div>' : '') +
+      '</div>' +
+      '<div class="stop-card">' +
+        '<div class="stop-area">' + area + '</div>' +
+        '<div class="stop-count">' + items.length + ' shipment' + (items.length > 1 ? 's' : '') + ' · Stop ' + (i+1) + ' of ' + areas.length + '</div>' +
+        '<div class="stop-items">' +
+          items.map(function(s){
+            return '<div class="stop-item"><span>' + s.con + ' — ' + s.customer.split(' ')[0] + '</span><span style="font-weight:700;color:' + (s.payment === 'COD' ? '#c2410c' : '#16a34a') + '">' + (s.payment === 'COD' ? 'AED ' + s.balance : 'Online') + '</span></div>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  el('route-stops').innerHTML = html;
+}
+
+function renderReport() {
+  var today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  setEl('rpt-date', today);
+  setEl('r-d', data.delivered.length);
+  setEl('r-r', data.returns.length);
+  setEl('r-h', data.hold.length);
+  var codT = data.delivered.filter(function(s){ return s.payment === 'COD'; }).reduce(function(a,s){ return a + s.balance; }, 0);
+  setEl('r-c', 'AED ' + codT);
+  var all = data.delivered.concat(data.returns).concat(data.hold).concat(data.pending);
+  el('rpt-list').innerHTML = all.length ? all.map(function(s){
+    var st = s.status || 'Pending';
+    var stColor = st === 'Delivered' ? '#166534' : st === 'Return' ? '#be123c' : st === 'Hold' ? '#92400e' : '#475569';
+    var stBg    = st === 'Delivered' ? '#f0fdf4' : st === 'Return' ? '#fff1f2' : st === 'Hold' ? '#fffbeb' : '#f1f5f9';
+    return '<div class="rpt-row">' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:700;color:#1e293b">' + s.con + '</div>' +
+        '<div style="font-size:12px;color:#64748b">' + s.customer + ' · ' + s.area + '</div>' +
+        (s.returnReason ? '<div style="font-size:11px;color:#be123c">' + s.returnReason + '</div>' : '') +
+        (s.holdReason   ? '<div style="font-size:11px;color:#92400e">' + s.holdReason + '</div>' : '') +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:' + stBg + ';color:' + stColor + '">' + st + '</span>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">' + (s.payment === 'COD' ? 'COD AED ' + s.balance : 'Online') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') : '<div style="padding:16px;text-align:center;font-size:13px;color:#94a3b8">No data yet</div>';
+}
+
+// ── DETAIL MODAL ──
+function openDetail(con) {
+  var s = data.pending.find(function(x){ return x.con === con; });
+  if (!s) return;
+  selShipment = s;
+  el('detail-body').innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">' +
+      '<div><div class="modal-title">' + s.customer + '</div><div class="modal-sub">' + s.con + ' · <span style="font-size:11px;padding:2px 8px;border-radius:8px;' + coTag(s.company) + '">' + s.company + '</span></div></div>' +
+      '<button id="close-detail" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:26px;line-height:1;padding:0">×</button>' +
+    '</div>' +
+    '<div class="info-row"><div class="info-icon" style="background:#eff6ff">📍</div><div><div class="info-lbl">Address</div><div class="info-val">' + s.address + '</div></div></div>' +
+    '<div class="info-row"><div class="info-icon" style="background:#fdf4ff">📞</div><div><div class="info-lbl">Phone</div><div class="info-val">' + s.phone + '</div></div></div>' +
+    '<div class="info-row"><div class="info-icon" style="background:' + (s.payment === 'COD' ? '#fff7ed' : '#f0fdf4') + '">' + (s.payment === 'COD' ? '💰' : '✅') + '</div><div><div class="info-lbl">Payment</div><div class="info-val">' + (s.payment === 'COD' ? 'Cash on Delivery — AED ' + s.balance : 'Online Paid ✓') + '</div></div></div>' +
+    '<div class="info-row"><div class="info-icon" style="background:#f8fafc">🧾</div><div><div class="info-lbl">Product / Courier</div><div class="info-val">AED ' + s.amount + ' / AED ' + s.courier + '</div></div></div>' +
+    '<div class="mbtn-row">' +
+      '<button class="mbtn mbtn-call" id="d-call">📞 Call</button>' +
+      '<button class="mbtn mbtn-wa" id="d-wa">💬 WhatsApp</button>' +
+    '</div>' +
+    '<div class="act3">' +
+      '<button id="d-del" style="background:#16a34a;color:#fff">✅<br>Delivered</button>' +
+      '<button id="d-hld" style="background:#f59e0b;color:#fff">⏸<br>Hold</button>' +
+      '<button id="d-ret" style="background:#ef4444;color:#fff">↩<br>Return</button>' +
+    '</div>';
+
+  el('close-detail').onclick = function(){ closeOverlay('detail-overlay'); };
+  el('d-call').onclick = function(){ window.location.href = 'tel:' + s.phone; };
+  el('d-wa').onclick = function(){
+    var num = s.phone.startsWith('0') ? '+971' + s.phone.slice(1) : s.phone;
+    window.open('https://wa.me/' + num + '?text=Hi%20' + encodeURIComponent(s.customer) + '%2C%20delivery%20' + s.con, '_blank');
+  };
+  el('d-del').onclick = function(){ closeOverlay('detail-overlay'); doAction(s.con, 'delivered'); };
+  el('d-hld').onclick = function(){ closeOverlay('detail-overlay'); openReason(s.con, 'hold'); };
+  el('d-ret').onclick = function(){ closeOverlay('detail-overlay'); openReason(s.con, 'return'); };
+
+  el('detail-overlay').classList.add('show');
+}
+
+// ── REASON MODAL ──
+function openReason(con, action, fromHold) {
+  var s = fromHold
+    ? data.hold.find(function(x){ return x.con === con; })
+    : data.pending.find(function(x){ return x.con === con; });
+  if (!s) return;
+  selShipment = s;
+  selAction   = action;
+  selReason   = null;
+  var fromHoldFlag = !!fromHold;
+
+  var reasons = action === 'return' ? RETURN_REASONS : HOLD_REASONS;
+  var title   = action === 'return' ? '↩ Return Shipment' : '⏸ Hold Shipment';
+  var btnBg   = action === 'return' ? '#ef4444' : '#f59e0b';
+  var btnTxt  = action === 'return' ? 'Confirm Return' : 'Confirm Hold';
+
+  var html = '<div class="modal-title">' + title + '</div>' +
+    '<div class="modal-sub">' + s.con + ' · ' + s.customer + '</div>' +
+    '<div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Select Reason</div>' +
+    '<div class="reason-list" id="reason-list">';
+  reasons.forEach(function(r, i){
+    html += '<div class="reason-item" data-idx="' + i + '">' + r + '</div>';
+  });
+  html += '</div>' +
+    '<button id="confirm-reason-btn" style="background:' + btnBg + ';color:#fff;" class="confirm-btn">' + btnTxt + '</button>' +
+    '<button id="cancel-reason-btn" class="cancel-btn">Cancel</button>';
+
+  el('reason-body').innerHTML = html;
+
+  // Attach reason click listeners
+  document.querySelectorAll('#reason-list .reason-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      document.querySelectorAll('#reason-list .reason-item').forEach(function(x){ x.classList.remove('picked'); });
+      this.classList.add('picked');
+      selReason = parseInt(this.getAttribute('data-idx'));
+    });
+  });
+
+  el('confirm-reason-btn').addEventListener('click', function(){
+    if (selReason === null) { showToast('Please select a reason'); return; }
+    var reason = reasons[selReason];
+    closeOverlay('reason-overlay');
+    if (fromHoldFlag) {
+      doActionFromHold(selShipment.con, selAction, reason);
+    } else {
+      doAction(selShipment.con, selAction, reason);
+    }
+  });
+
+  el('cancel-reason-btn').addEventListener('click', function(){
+    closeOverlay('reason-overlay');
+  });
+
+  el('reason-overlay').classList.add('show');
+}
+
+function closeOverlay(id) {
+  el(id).classList.remove('show');
+}
+
+// Close overlays on background tap
+el('detail-overlay').addEventListener('click', function(e){ if(e.target === this) closeOverlay('detail-overlay'); });
+el('reason-overlay').addEventListener('click', function(e){ if(e.target === this) closeOverlay('reason-overlay'); });
+
+// ── ACTIONS ──
+function doAction(con, action, reason) {
+  var s = data.pending.find(function(x){ return x.con === con; });
+  if (!s) return;
+  data.pending = data.pending.filter(function(x){ return x.con !== con; });
+
+  if (action === 'delivered') {
+    s.status = 'Delivered';
+    data.delivered.push(s);
+    showToast('✅ Delivered: ' + con);
+  } else if (action === 'hold') {
+    s.status = 'Hold';
+    s.holdReason = reason || '';
+    data.hold.push(s);
+    showToast('⏸ On Hold: ' + con);
+  } else if (action === 'return') {
+    s.status = 'Return';
+    s.returnReason = reason || '';
+    data.returns.push(s);
+    showToast('↩ Return: ' + con);
+  }
+  syncStatus(s);
+  renderAll();
+}
+
+function doActionFromHold(con, action, reason) {
+  var s = data.hold.find(function(x){ return x.con === con; });
+  if (!s) return;
+  data.hold = data.hold.filter(function(x){ return x.con !== con; });
+  if (action === 'delivered') {
+    s.status = 'Delivered';
+    data.delivered.push(s);
+    showToast('✅ Delivered: ' + con);
+  } else if (action === 'return') {
+    s.status = 'Return';
+    s.returnReason = reason || '';
+    data.returns.push(s);
+    showToast('↩ Return: ' + con);
+  }
+  syncStatus(s);
+  renderAll();
+}
+
+function syncStatus(s) {
+  if (API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') return;
+  fetch(API_URL + '?action=updateStatus', {
+    method: 'POST',
+    body: JSON.stringify({ action:'updateStatus', conNo: s.con, status: s.status, returnReason: s.returnReason || '', holdReason: s.holdReason || '' }),
+    headers: { 'Content-Type': 'application/json' }
+  }).catch(function(){});
+}
+
+// ── TABS ──
+document.querySelectorAll('.tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    var name = this.getAttribute('data-tab');
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+    this.classList.add('on');
+    ['pending','hold','route','delivered','returns','report'].forEach(function(p){
+      var pg = el('pg-' + p);
+      if (pg) pg.style.display = p === name ? 'block' : 'none';
+    });
+  });
+});
+
+// ── PDF ──
+el('pdf-btn').addEventListener('click', function(){
+  if (typeof window.jspdf === 'undefined') { showToast('Loading PDF, try again...'); return; }
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  var pw = doc.internal.pageSize.getWidth();
+  var today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  doc.setFillColor(26,86,219); doc.rect(0,0,pw,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.text('Smart Fix Delivery',14,13);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Rider: ' + (currentRider ? currentRider.name : ''), 14, 21);
+  doc.text(today, pw - 14, 21, { align:'right' });
+  var codT = data.delivered.filter(function(s){ return s.payment === 'COD'; }).reduce(function(a,s){ return a + s.balance; }, 0);
+  var all  = data.delivered.concat(data.returns).concat(data.hold).concat(data.pending);
+  doc.autoTable({ startY:36,
+    head:[['Summary','']],
+    body:[['Total Shipments', all.length],['Delivered', data.delivered.length],['Returns', data.returns.length],['On Hold', data.hold.length],['Pending', data.pending.length],['COD Collected','AED ' + codT]],
+    styles:{fontSize:9,cellPadding:3}, headStyles:{fillColor:[26,86,219],textColor:255,fontStyle:'bold'}, theme:'grid', margin:{left:14}, tableWidth:110
+  });
+  var y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
+  doc.text('Shipment Details', 14, y);
+  doc.autoTable({ startY: y+4,
+    head:[['Con. No','Company','Customer','Area','Payment','Status','Reason']],
+    body: all.map(function(s){ return [s.con, s.company, s.customer, s.area, s.payment==='COD'?'COD AED '+s.balance:'Online', s.status, s.returnReason||s.holdReason||'-']; }),
+    styles:{fontSize:8,cellPadding:2.5}, headStyles:{fillColor:[26,86,219],textColor:255,fontStyle:'bold'}, alternateRowStyles:{fillColor:[248,250,255]},
+    columnStyles:{0:{cellWidth:22},1:{cellWidth:18},2:{cellWidth:32},3:{cellWidth:20},4:{cellWidth:22},5:{cellWidth:18},6:{cellWidth:28}}, margin:{left:14}
+  });
+  doc.save('SmartFix_Rider_' + new Date().toISOString().slice(0,10) + '.pdf');
+  showToast('✅ PDF saved!');
+});
+
+</script>
+</body>
+</html>
